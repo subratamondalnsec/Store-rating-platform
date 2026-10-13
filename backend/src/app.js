@@ -58,6 +58,11 @@ const authRateLimiter = rateLimit({
 // Apply rate limiter specifically to auth routes
 app.use('/api/auth', authRateLimiter);
 
+// Bare health check for Render (lightweight, no database touch)
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'ok' });
+});
+
 // Main API routes
 app.use('/api', apiRoutes);
 

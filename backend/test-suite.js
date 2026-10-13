@@ -47,7 +47,20 @@ async function runTestSuite() {
   // 1. Health check
   console.log(`${colors.blue}[1] System Health Check${colors.reset}`);
   const healthRes = await client.get('/health');
-  assert(healthRes.status === 200 && healthRes.data.success === true, 'GET /api/health returns 200 OK');
+  assert(
+    healthRes.status === 200 &&
+    healthRes.data.status === 'ok' &&
+    healthRes.data.db === 'up' &&
+    typeof healthRes.data.timestamp === 'string',
+    'GET /api/health returns 200 OK with db up and ISO timestamp'
+  );
+
+  // Bare health check for Render
+  const bareHealth = await axios.get('http://localhost:5000/health');
+  assert(
+    bareHealth.status === 200 && bareHealth.data.status === 'ok',
+    'GET /health (bare endpoint) returns 200 OK with status ok'
+  );
 
   // 2. Negative Validation Checks
   console.log(`\n${colors.blue}[2] Negative Validation Checks${colors.reset}`);

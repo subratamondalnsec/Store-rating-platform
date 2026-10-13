@@ -207,6 +207,41 @@ The platform comes pre-seeded with rich, realistic data conforming to all valida
 
 ---
 
+## 🌐 Deployment
+
+### 1. Backend on Render (Web Service)
+- **Root Directory**: `backend`
+- **Environment**: `Node`
+- **Build Command**: `npm install && npx prisma generate && npx prisma migrate deploy`
+- **Start Command**: `npm start` *(executes `node server.js`)*
+- **Health Check Path**: `/health` *(bare endpoint returning `{ "status": "ok" }` without database overhead)*
+- **Environment Variables**:
+  - `DATABASE_URL`: Neon pooled PostgreSQL connection string (`?sslmode=require`)
+  - `DIRECT_URL`: Neon direct unpooled connection string
+  - `JWT_SECRET`: Random secure secret key (min 32 characters)
+  - `JWT_EXPIRES_IN`: `1d`
+  - `CLIENT_URL`: Exact Vercel URL (e.g. `https://your-store-rating.vercel.app`, **no trailing slash**)
+  - `ADMIN_NAME`: Administrator full name (20–60 characters)
+  - `ADMIN_EMAIL`: Administrator email
+  - `ADMIN_PASSWORD`: Strong password (8–16 chars, 1 uppercase, 1 special character)
+  - `ADMIN_ADDRESS`: Administrator address
+  - `NODE_ENV`: `production`
+
+### 2. Frontend on Vercel (Single Page App)
+- **Root Directory**: `frontend`
+- **Framework Preset**: `Vite`
+- **Build Command**: `npm run build`
+- **Output Directory**: `dist`
+- **Environment Variables**:
+  - `VITE_API_URL`: Your deployed Render backend URL with `/api` suffix (e.g. `https://your-backend.onrender.com/api`)
+  - `VITE_SHOW_DEMO_LOGINS`: `true`
+
+### ⚠️ Critical Deployment Notes
+- **CORS Matching**: Ensure `CLIENT_URL` in Render matches your live Vercel domain exactly (e.g. `https://your-app.vercel.app`). Do **not** include a trailing slash.
+- **Cold Start & Database Wake-up**: Render free-tier instances sleep after periods of inactivity, and Neon databases auto-suspend when idle. The first cold start request can take 30–60 seconds. To provide a seamless experience, the frontend fires a silent, non-blocking wake-up ping (`GET ${VITE_API_URL}/health`) on initial page load, waking up both Render and Neon in the background without delaying user interaction or triggering error toasts.
+
+---
+
 ## 📡 API Reference Summary
 
 All endpoints are prefixed with `/api`.

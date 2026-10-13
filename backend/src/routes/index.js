@@ -6,12 +6,22 @@ const adminRoutes = require('./admin.routes');
 const storeRoutes = require('./store.routes');
 const ownerRoutes = require('./owner.routes');
 
-router.get('/health', (req, res) => {
-  res.json({
-    success: true,
-    message: 'Store Rating Platform API is healthy',
-    timestamp: new Date().toISOString()
-  });
+const prisma = require('../config/db');
+
+router.get('/health', async (req, res) => {
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+    return res.status(200).json({
+      status: 'ok',
+      db: 'up',
+      timestamp: new Date().toISOString()
+    });
+  } catch (err) {
+    return res.status(503).json({
+      status: 'degraded',
+      db: 'down'
+    });
+  }
 });
 
 router.use('/auth', authRoutes);

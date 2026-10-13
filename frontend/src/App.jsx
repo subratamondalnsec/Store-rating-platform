@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Navbar from './components/Navbar';
@@ -44,6 +44,28 @@ const HomeRedirect = () => {
 };
 
 function App() {
+  // Silent, non-blocking wake-up ping for Render backend & Neon database
+  useEffect(() => {
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 60000);
+
+    fetch(`${apiUrl}/health`, {
+      method: 'GET',
+      signal: controller.signal
+    })
+      .catch(() => {
+        // Silently ignore network errors, cold starts, or aborted pings
+      })
+      .finally(() => {
+        clearTimeout(timeoutId);
+      });
+
+    return () => {
+      clearTimeout(timeoutId);
+    };
+  }, []);
+
   return (
     <AuthProvider>
       <BrowserRouter>
