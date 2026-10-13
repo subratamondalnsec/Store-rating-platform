@@ -9,7 +9,8 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:deploy": "prisma migrate deploy",
-    "seed": "node prisma/seed.js"
+    "seed": "node prisma/seed.js",
+    "seed:reset": "node prisma/seed.js --reset"
   },
   "dependencies": {
     "@prisma/client": "6.4.1",

@@ -139,6 +139,7 @@ ADMIN_ADDRESS="100 Headquarters Boulevard, Suite 400, New York, NY 10001"
 
 ```env
 VITE_API_URL="http://localhost:5000/api"
+VITE_SHOW_DEMO_LOGINS="true"
 ```
 
 ---
@@ -160,7 +161,12 @@ npm install
 ```bash
 cd backend
 npx prisma migrate dev --name init
+
+# Idempotent seeding (safe to run multiple times, updates without wiping)
 npm run seed
+
+# Full reset & re-seed (wipes all existing ratings, stores, and users then re-seeds)
+npm run seed:reset
 ```
 
 ### 3. Start Backend API Server
@@ -179,19 +185,25 @@ npm run dev
 
 ---
 
-## 🔑 Test Credentials (from Seed)
+## 🔑 Test Accounts
 
-All accounts are pre-seeded and comply with password security policies:
+The platform comes pre-seeded with rich, realistic data conforming to all validation rules. You can log in manually or use the one-click **"Try a demo account"** buttons on the login page (`VITE_SHOW_DEMO_LOGINS=true`).
 
-| Role | Name | Email | Password |
+| Account Type | Role | Email | Password |
 |---|---|---|---|
-| **System Administrator** | System Administrator Account | `admin@storerating.com` | `Admin@123456` |
-| **Store Owner 1** | Johnathan Alexander Doe | `owner1@storerating.com` | `Owner@123456` |
-| **Store Owner 2** | Eleanor Margaret Vance | `owner2@storerating.com` | `Owner@123456` |
-| **Store Owner 3 (Unassigned)** | Samuel Harrison Brooks | `owner3@storerating.com` | `Owner@123456` |
-| **Normal User 1** | Christopher James Evans | `user1@storerating.com` | `User@123456` |
-| **Normal User 2** | Katherine Elizabeth Ray | `user2@storerating.com` | `User@123456` |
-| **Normal User 3** | Alexander Michael Scott | `user3@storerating.com` | `User@123456` |
+| **Main System Administrator** | `ADMIN` | `subrata24012005@gmail.com` | *(see backend/.env)* |
+| **Demo Administrator** | `ADMIN` | `demo.admin@storerating.com` | `Demo@12345` |
+| **Demo Store Owner** | `STORE_OWNER` | `demo.owner@storerating.com` | `Demo@12345` |
+| **Demo Normal User** | `USER` | `demo.user@storerating.com` | `Demo@12345` |
+| **Sample Store Owner** | `STORE_OWNER` | `owner1@storerating.com` | `Test@12345` |
+| **Sample Normal User** | `USER` | `user1@storerating.com` | `Test@12345` |
+
+> **Notes on Test Accounts**:
+> - All other sample accounts (`ops.admin@storerating.com`, `support.admin@storerating.com`, `owner2@storerating.com` through `owner10@storerating.com`, and `user2@storerating.com` through `user20@storerating.com`) use the shared password **`Test@12345`**.
+> - The three **Demo Accounts** (`demo.*@storerating.com` with password **`Demo@12345`**) are dedicated accounts configured for review and one-click demonstration purposes. Demo Store Owner manages a flagship store with 16 customer ratings; Demo Normal User has submitted ratings for 5 stores and left 6 stores unrated.
+> - Seeding commands:
+>   - `npm run seed`: Runs the idempotent seeder (`node prisma/seed.js`). Can also be invoked via `npx prisma db seed`.
+>   - `npm run seed:reset`: Drops all ratings, stores, and users before running the seeder from scratch (`node prisma/seed.js --reset`). A clear console warning is printed before wiping.
 
 ---
 

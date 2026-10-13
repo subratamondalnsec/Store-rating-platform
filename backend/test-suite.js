@@ -2,7 +2,14 @@
  * Comprehensive End-to-End Verification Test Suite
  * Tests all authentication, roles, validations, listings, sorting, filtering, and rating features.
  */
-const axios = require('axios');
+require('dotenv').config();
+let axios;
+try {
+  axios = require('axios');
+} catch {
+  axios = require('../frontend/node_modules/axios');
+}
+if (axios.default) axios = axios.default;
 
 const BASE_URL = 'http://localhost:5000/api';
 const client = axios.create({
@@ -93,17 +100,76 @@ async function runTestSuite() {
   );
   const adminToken = adminLogin.data?.data?.token;
 
-  // Login Store Owner 1
+  // Login Store Owner 1 (Sample account with Test@12345)
   const ownerLogin = await client.post('/auth/login', {
     email: 'owner1@storerating.com',
-    password: 'Owner@123456'
+    password: 'Test@12345'
   });
   assert(
     ownerLogin.status === 200 && ownerLogin.data.data.user.role === 'STORE_OWNER',
-    'Store Owner login successful with role STORE_OWNER',
+    'Store Owner 1 login successful with role STORE_OWNER and shared password Test@12345',
     ownerLogin.data?.message
   );
   const ownerToken = ownerLogin.data?.data?.token;
+
+  // Login Demo Admin
+  const demoAdminLogin = await client.post('/auth/login', {
+    email: 'demo.admin@storerating.com',
+    password: 'Demo@12345'
+  });
+  assert(
+    demoAdminLogin.status === 200 && demoAdminLogin.data.data.user.role === 'ADMIN',
+    'Demo Admin login successful with Demo@12345 and role ADMIN',
+    demoAdminLogin.data?.message
+  );
+
+  // Login Demo Store Owner
+  const demoOwnerLogin = await client.post('/auth/login', {
+    email: 'demo.owner@storerating.com',
+    password: 'Demo@12345'
+  });
+  assert(
+    demoOwnerLogin.status === 200 && demoOwnerLogin.data.data.user.role === 'STORE_OWNER',
+    'Demo Store Owner login successful with Demo@12345 and role STORE_OWNER',
+    demoOwnerLogin.data?.message
+  );
+  const demoOwnerToken = demoOwnerLogin.data?.data?.token;
+
+  // Verify Demo Owner Dashboard has >= 8 ratings
+  const demoOwnerDashboard = await client.get('/owner/dashboard', {
+    headers: { Authorization: `Bearer ${demoOwnerToken}` }
+  });
+  assert(
+    demoOwnerDashboard.status === 200 &&
+    demoOwnerDashboard.data.data.hasStore === true &&
+    demoOwnerDashboard.data.data.totalRatings >= 8,
+    'Demo Store Owner dashboard shows full store with >= 8 customer ratings (actual: ' + demoOwnerDashboard.data?.data?.totalRatings + ')'
+  );
+
+  // Login Demo Normal User
+  const demoUserLogin = await client.post('/auth/login', {
+    email: 'demo.user@storerating.com',
+    password: 'Demo@12345'
+  });
+  assert(
+    demoUserLogin.status === 200 && demoUserLogin.data.data.user.role === 'USER',
+    'Demo Normal User login successful with Demo@12345 and role USER',
+    demoUserLogin.data?.message
+  );
+  const demoUserToken = demoUserLogin.data?.data?.token;
+
+  // Verify Demo Normal User has rated >= 5 stores
+  const demoUserStores = await client.get('/stores', {
+    headers: { Authorization: `Bearer ${demoUserToken}` }
+  });
+  const ratedByDemoUser = demoUserStores.data?.data?.stores?.filter(s => s.userRating !== null) || [];
+  const unratedByDemoUser = demoUserStores.data?.data?.stores?.filter(s => s.userRating === null) || [];
+  assert(
+    demoUserStores.status === 200 &&
+    ratedByDemoUser.length >= 5 &&
+    unratedByDemoUser.length > 0,
+    `Demo Normal User has rated >= 5 stores (rated: ${ratedByDemoUser.length}, unrated: ${unratedByDemoUser.length})`
+  );
 
   // Register New Normal User
   const timestamp = Date.now();
@@ -231,7 +297,7 @@ async function runTestSuite() {
     '/auth/password',
     {
       currentPassword: 'WrongPassword@123',
-      newPassword: 'UpdatedPassword@456'
+      newPassword: 'Updated@12345'
     },
     { headers: { Authorization: `Bearer ${userToken}` } }
   );
@@ -245,19 +311,20 @@ async function runTestSuite() {
     '/auth/password',
     {
       currentPassword: 'User@123456',
-      newPassword: 'UpdatedPassword@456'
+      newPassword: 'Updated@12345'
     },
     { headers: { Authorization: `Bearer ${userToken}` } }
   );
   assert(
     goodChangePwd.status === 200,
-    'Password change succeeds with correct current password and valid new password'
+    'Password change succeeds with correct current password and valid new password',
+    goodChangePwd.data?.message
   );
 
   // Verify login with new password
   const loginWithNewPwd = await client.post('/auth/login', {
     email: testUserEmail,
-    password: 'UpdatedPassword@456'
+    password: 'Updated@12345'
   });
   assert(
     loginWithNewPwd.status === 200,
